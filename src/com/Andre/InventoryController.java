@@ -115,7 +115,21 @@ public class InventoryController {
 
 
     }
+
+    public void requestUserChange(int id, String newUser) {
+        try {
+            db.reassignLaptop(id, newUser);
+            System.out.println("User successfully changed.");
+
+        }
+        catch (LaptopDataAccessException sqle) {
+            System.out.println("Error fetching laptop (request laptop by ID)");
+            throw sqle;
+
+        }
+    }
 }
+
 
 class AddShutdownHook {
     public void attachShutdownHook() {

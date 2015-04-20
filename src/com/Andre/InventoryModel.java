@@ -331,8 +331,8 @@ public class InventoryModel {
         try {
             String reassignLaptop = "UPDATE laptops set staff = ? where id = ?";
             PreparedStatement psReassign = conn.prepareStatement(reassignLaptop);
-            psReassign.setInt(1, id);
-            psReassign.setString(2, newUser);
+            psReassign.setInt(2, id);
+            psReassign.setString(1, newUser);
             //We expect exactly one row to be modified.
             int rowsModified = psReassign.executeUpdate();  //exceuteUpdate returns the number of rows modified so we can check to make sure exactly one row was changed - the row with the specific laptop
             if (rowsModified == 1) {

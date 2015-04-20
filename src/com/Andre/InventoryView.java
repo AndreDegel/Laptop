@@ -82,6 +82,10 @@ public class InventoryView {
 
         //TODO once laptop has been found, ask for new staff member's name
         //TODO Write this to the database, see draft method in InventoryModel
+        System.out.println("Who is the staff member to be reassigned?");
+        String newStaff = s.nextLine();
+        myController.requestUserChange(id, newStaff);
+
 
         //Remember InventoryModel.reassignLaptop returns true for sucess, false if laptop with this ID is f
 
@@ -144,7 +148,7 @@ public class InventoryView {
 
             System.out.println("1. View all inventory");
             System.out.println("2. Add a new laptop");
-            System.out.println("3. To be added - reassign a laptop to another staff member");
+            System.out.println("3. Reassign a laptop to another staff member");
             System.out.println("4. To be added - retire a laptop");
             System.out.println(QUIT + ". Quit program");
 
