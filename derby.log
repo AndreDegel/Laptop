@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Mon Apr 20 10:08:13 CDT 2015:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.11.1.1 - (1616546): instance a816c00e-014c-d75f-58f2-00000338c070 
+on database directory C:\Users\Andre\Desktop\Laptop\laptopInventoryDB with class loader sun.misc.Launcher$AppClassLoader@74a14482 
+Loaded from file:/C:/Users/Andre/.IntelliJIdea14/config/jdbc-drivers/derby-10.11.1.1.jar
+java.vendor=Oracle Corporation
+java.runtime.version=1.8.0_25-b18
+user.dir=C:\Users\Andre\Desktop\Laptop
+os.name=Windows 7
+os.arch=amd64
+os.version=6.1
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''
