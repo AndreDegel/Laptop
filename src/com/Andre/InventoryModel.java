@@ -49,7 +49,7 @@ public class InventoryModel {
 
     public boolean setupDatabase() {
 
-        return setupDatabase(false);
+        return setupDatabase(false);  //true = delete and recreate database, false = keep existing database
 
     }
 
@@ -82,24 +82,26 @@ public class InventoryModel {
 
 
         //Remove the test data for real program
-        try {
-            addTestData();
+
+        //If we are deleting and recreating the table, we'll need to add test data.
+        if (deleteAndRecreate) {
+
+            try {
+                addTestData();
+
+            } catch (Exception sqle) {
+
+                System.err.println("Unable to add test data to database. Error message and stack trace follow");
+                System.err.println(sqle.getMessage());
+                sqle.printStackTrace();
+                return false;
+
+            }
         }
-        catch (Exception sqle) {
-
-            System.err.println("Unable to add test data to database. Error message and stack trace follow");
-            System.err.println(sqle.getMessage());
-            sqle.printStackTrace();
-            return false;
-
-
-        }
-
         //At this point, it seems like everything worked.
 
         return true;
     }
-
 
 
     private void createTable(boolean deleteAndRecreate) throws SQLException {
@@ -124,6 +126,7 @@ public class InventoryModel {
                     try {
                         statement.executeUpdate(deleteTableSQL);
                         statement.executeUpdate(createLaptopTableSQL);
+
                     } catch (SQLException e) {
                         //Still doesn't work. Throw the exception.
                         throw e;
@@ -211,13 +214,24 @@ public class InventoryModel {
         //Create SQL query to add this laptop info to DB
 
         String addLaptopSQLps = "INSERT INTO laptops (make, model, staff) VALUES ( ? , ? , ?)" ;
+
         try {
-            psAddLaptop = conn.prepareStatement(addLaptopSQLps);
+            psAddLaptop = conn.prepareStatement(addLaptopSQLps, psAddLaptop.RETURN_GENERATED_KEYS);
             allStatements.add(psAddLaptop);
             psAddLaptop.setString(1, laptop.getMake());
             psAddLaptop.setString(2, laptop.getModel());
             psAddLaptop.setString(3, laptop.getStaff());
             psAddLaptop.execute();
+
+            //Retrieve new laptop ID and add it to the Laptop laptop so calling methods can use it.
+
+            ResultSet keys = psAddLaptop.getGeneratedKeys();
+            //We assume just one key, which will be the first thing in the ResultSet
+            keys.next();
+            int laptopID = keys.getInt(1);
+            laptop.id = laptopID;
+
+
         }
         catch (SQLException sqle) {
             String errorMessage = "Error preparing statement or executing prepared statement to add laptop";
@@ -291,7 +305,7 @@ public class InventoryModel {
                     return l;
                 } else {
                     //more than one laptop found
-                    //Error condition - more than one laptop for primary key ID is a problem
+                    //Error condition - more than one laptop for primary key ID is a problem that must be fixed
                     throw new LaptopDataAccessException("More than one laptop in database for ID " + id);
                 }
             } else {
@@ -307,20 +321,25 @@ public class InventoryModel {
 
     }
 
+    //TODO test this method. Use it in the code.
+
+    /** @return true if laptop update is successful (1 row is changed) or false if laptop not updated = this will be because the id isn't in the database
+     * @throws LaptopDataAccessException if more than one laptop with that ID found or in the case of general DB errors */
 
     public boolean reassignLaptop(int id, String newUser) throws LaptopDataAccessException{
 
         try {
-            String fetchLaptop = "UPDATE (staff) FROM laptops where id = ?";
-            PreparedStatement psFetch = conn.prepareStatement(fetchLaptop);
-            psFetch.setInt(1, id);
+            String reassignLaptop = "UPDATE laptops set staff = ? where id = ?";
+            PreparedStatement psReassign = conn.prepareStatement(reassignLaptop);
+            psReassign.setInt(1, id);
+            psReassign.setString(2, newUser);
             //We expect exactly one row to be modified.
-            int rowsModified = psFetch.executeUpdate();
-
+            int rowsModified = psReassign.executeUpdate();  //exceuteUpdate returns the number of rows modified so we can check to make sure exactly one row was changed - the row with the specific laptop
             if (rowsModified == 1) {
-                return true;   //What can we return to indicate no laptop?
+                return true;   //Success
             } else if (rowsModified == 0 ){
-                throw new LaptopDataAccessException("No laptop with ID number " + id + " found");
+                //This means the laptop is not found. Return message that permits the user to try again - maybe a bad ID was entered?
+                return false;
             } else {
                 //rowsModified is not 0 or 1 - so more than 1 row was modified. (Can executeUpdate return negative numbers? I don't think so...)
                 throw new LaptopDataAccessException("More than one laptop with laptop id " + id);
@@ -335,8 +354,3 @@ public class InventoryModel {
 
     }
 }
-
-
-
-
-
