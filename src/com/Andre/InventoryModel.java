@@ -38,6 +38,7 @@ public class InventoryModel {
     LinkedList<Statement> allStatements = new LinkedList<Statement>();
 
     PreparedStatement psAddLaptop = null;
+    PreparedStatement psDeleteLaptop = null;
 
 
     public InventoryModel(InventoryController controller) {
@@ -321,8 +322,6 @@ public class InventoryModel {
 
     }
 
-    //TODO test this method. Use it in the code.
-
     /** @return true if laptop update is successful (1 row is changed) or false if laptop not updated = this will be because the id isn't in the database
      * @throws LaptopDataAccessException if more than one laptop with that ID found or in the case of general DB errors */
 
@@ -351,6 +350,33 @@ public class InventoryModel {
 
 
         }
-
     }
+
+    public boolean deleteLaptop (int id) {
+        //Create SQL query to delete this laptop(id) from the DB
+
+        String deleteLaptopSQLps = "DELETE FROM laptops WHERE id = ?";
+
+        try {
+            psDeleteLaptop = conn.prepareStatement(deleteLaptopSQLps);
+            allStatements.add(psDeleteLaptop);
+            psDeleteLaptop.setInt(1, id);
+            //We expect exactly one row to be modified.
+            int rowsModified = psDeleteLaptop.executeUpdate();  //exceuteUpdate returns the number of rows modified so we can check to make sure exactly one row was changed - the row with the specific laptop
+            if (rowsModified == 1) {
+                return true;   //Success
+            } else if (rowsModified == 0 ){
+                //This means the laptop is not found. Return message that permits the user to try again - maybe a bad ID was entered?
+                return false;
+            } else {
+                //rowsModified is not 0 or 1 - so more than 1 row was modified. (Can executeUpdate return negative numbers? I don't think so...)
+                throw new LaptopDataAccessException("More than one laptop with laptop id " + id);
+            }
+
+        } catch (SQLException sqle) {
+            String errorMessage = "Error preparing statement or executing prepared statement to add laptop";
+            throw new LaptopDataAccessException(errorMessage, sqle);
+        }
+    }
+
 }

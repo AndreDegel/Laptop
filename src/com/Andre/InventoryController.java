@@ -116,16 +116,44 @@ public class InventoryController {
 
     }
 
+    //Calls to the database to change the staff on a laptop
     public void requestUserChange(int id, String newUser) {
+        boolean change;
+        //checks if the entered id is in the database or if it was a wrong id
         try {
-            db.reassignLaptop(id, newUser);
-            System.out.println("User successfully changed.");
-
+            change = db.reassignLaptop(id, newUser);
+            if (change) {
+                System.out.println("User successfully changed.");
+            }
+            else {
+                System.out.println("User not in database");
+            }
         }
+        //catches error if for some reason the database could not be accessed
         catch (LaptopDataAccessException sqle) {
             System.out.println("Error fetching laptop (request laptop by ID)");
             throw sqle;
 
+        }
+    }
+    // pretty much same as the user change just for deleting a user by id
+    public void requestDeleteById(int id) {
+        Laptop l = db.fetchLaptop(id);
+        boolean change;
+        try {
+            change = db.deleteLaptop(id);
+
+            //check if the SQL statement could be performed or not
+            if (change) {
+                System.out.println("Laptop " + l + " successfully deleted");
+            }
+            //Let the user now if something went wrong
+            else {
+                System.out.println("Laptop " + l + " could not be deleted");
+            }
+        }  catch (LaptopDataAccessException le) {
+            System.out.println("Failed to delete laptop " + le);
+            throw le;   //crash the program, programmer needs to fix this
         }
     }
 }

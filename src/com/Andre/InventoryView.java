@@ -50,14 +50,11 @@ public class InventoryView {
                 break;
             }
             case 3 : {
-                //TODO finish this
-                System.out.println("Reassign laptop - In the process of being implemented");
                 reassignLaptop();
                 break;
             }
             case 4 : {
-                //TODO implement this
-                System.out.println("Retire laptop - Not yet implemented");
+                retireLaptop();
                 break;
             }
         }
@@ -68,27 +65,54 @@ public class InventoryView {
 
         //Ask for laptop ID
         //Fetch laptop info and display for user to confirm this is the correct laptop
-
         int id;
-        System.out.println("Enter laptop ID to reassign");
-        try {
-            id = Integer.parseInt(s.nextLine());
-        } catch (NumberFormatException nf) {
-            System.out.println("Enter a number");
-            return;  //TODO give user another chance...
+        boolean change;
+        while (true) {
+            System.out.println("Enter laptop ID to reassign");
+            try {
+                id = Integer.parseInt(s.nextLine());
+                change = displayLaptopById(id);
+                //Check if the user enters a valid id and let him retry if not
+                if (change) {
+                    System.out.println("Who is the staff member to be reassigned?");
+                    String newStaff = s.nextLine();
+                    myController.requestUserChange(id, newStaff);
+                    break;
+                }
+                else {
+                    System.out.println("Sorry that user is not in the database.");
+                }
+                //catch if the user tries to enter characters
+            } catch (NumberFormatException nf) {
+                System.out.println("Enter a number");
+            }
         }
 
-        displayLaptopById(id);
+    }
 
-        //TODO once laptop has been found, ask for new staff member's name
-        //TODO Write this to the database, see draft method in InventoryModel
-        System.out.println("Who is the staff member to be reassigned?");
-        String newStaff = s.nextLine();
-        myController.requestUserChange(id, newStaff);
+    private void retireLaptop(){
+        //Ask for laptop ID
+        //Fetch laptop info and display for user to confirm this is the correct laptop
+        int id;
+        boolean change;
+        while (true) {
+            System.out.println("Enter laptop ID to reassign");
+            try {
+                id = Integer.parseInt(s.nextLine());
+                change = displayLaptopById(id);
+                //Check if the user enters a valid id and let him retry if not
+                if (change) {
+                    myController.requestDeleteById(id);
+                    break;
+                }
+                else {
+                    System.out.println("Sorry that user is not in the database.");
+                }
 
-
-        //Remember InventoryModel.reassignLaptop returns true for sucess, false if laptop with this ID is f
-
+            } catch (NumberFormatException nf) {
+                System.out.println("Enter a number");
+            }
+        }
     }
 
 
@@ -129,13 +153,14 @@ public class InventoryView {
     }
 
 
-    private void displayLaptopById(int id) {
+    private boolean displayLaptopById(int id) {
         Laptop l = myController.requestLaptopById(id);
         if (l == null) {
             System.out.println("Laptop " + id + " not found");
+            return false;
         } else {
             System.out.println(l);   //Call the toString method in Laptop
-
+            return true;
         }
     }
 
