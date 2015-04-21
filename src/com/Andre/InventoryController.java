@@ -76,19 +76,35 @@ public class InventoryController {
 
     }
 
-    public LinkedList<Laptop> requestAllInventory() {
+    public void requestAddCellphone(Cellphone c) {
 
-
-        //This message should arrive from the UI. Send a message to the db to request all laptop data.
-        //Returns a list of laptop objects
+        //This message should arrive from the UI. Send a message to the db to request that this laptop is added.
         //Throws LaptopDataAccessException in case of unrecoverable errors e.g. database corrupted or programmer
         //error in writing database code or SQL statements.
 
         try {
-            LinkedList<Laptop> allLaptops = db.displayAllLaptops();
-            return allLaptops;
+            db.addPhone(c);
+            System.out.println("Cellphone " + c + " added");
+
+        }  catch (LaptopDataAccessException le) {
+            System.out.println("Failed to add cellphone " + le);
+            throw le;   //crash the program, programmer needs to fix this
+        }
+
+    }
+
+    public LinkedList requestAllInventory(String owner) {
+
+
+        //This message should arrive from the UI. Send a message to the db to request all data.
+        //Returns a list of objects
+        //Throws LaptopDataAccessException in case of unrecoverable errors e.g. database corrupted or programmer
+        //error in writing database code or SQL statements.
+        try {
+            LinkedList allDevices = db.displayAllDevices(owner);
+            return allDevices;
         } catch (LaptopDataAccessException le) {
-            System.out.println("Controller detected error in fetching laptops from database");
+            System.out.println("Controller detected error in fetching devices from database");
             throw le;   //Crash program, programmer needs to fix
         }
 
@@ -107,6 +123,28 @@ public class InventoryController {
         try {
             Laptop l = db.fetchLaptop(id);
             return l;   //This will be null if laptop is not found
+        }
+        catch (LaptopDataAccessException le) {
+            System.out.println("Error fetching laptop (request laptop by ID)");
+            throw le;  //Crash program, programmer must fix
+        }
+
+
+    }
+
+    public Cellphone requestCellphoneById(int id) {
+
+        //This message should arrive from the UI. Send a message to the db to request this laptop.
+        //Returns a Laptop object if laptop is found, or null if it is not found.
+
+        //Throws LaptopDataAccessException in case of unrecoverable errors e.g. database corrupted or programmer
+        //error in writing database code or SQL statements;
+
+        // Also crashes in the event of more than one laptop found for a laptop ID  //TODO is this the right approach for this case?
+
+        try {
+            Cellphone c = db.fetchCellphone(id);
+            return c;   //This will be null if laptop is not found
         }
         catch (LaptopDataAccessException le) {
             System.out.println("Error fetching laptop (request laptop by ID)");
@@ -153,6 +191,26 @@ public class InventoryController {
             }
         }  catch (LaptopDataAccessException le) {
             System.out.println("Failed to delete laptop " + le);
+            throw le;   //crash the program, programmer needs to fix this
+        }
+    }
+
+    public void requestDeletePhoneById(int id) {
+        Cellphone c = db.fetchCellphone(id);
+        boolean change;
+        try {
+            change = db.deleteCellphone(id);
+
+            //check if the SQL statement could be performed or not
+            if (change) {
+                System.out.println("Cellphone " + c + " successfully deleted");
+            }
+            //Let the user now if something went wrong
+            else {
+                System.out.println("Cellphone " + c + " could not be deleted");
+            }
+        }  catch (LaptopDataAccessException le) {
+            System.out.println("Failed to delete cellphone " + le);
             throw le;   //crash the program, programmer needs to fix this
         }
     }

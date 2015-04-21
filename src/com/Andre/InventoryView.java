@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 public class InventoryView {
 
-    private final int QUIT = 5;   //Modify if you add more menu items.
+    private final int QUIT = 7;   //Modify if you add more menu items.
     //TODO Can you think of a more robust way of handling menu options which would be easy to modify with a varying number of menu choices?
 
     InventoryController myController;
@@ -56,6 +56,12 @@ public class InventoryView {
             case 4 : {
                 retireLaptop();
                 break;
+            }
+            case 5 : {
+                addNewPhone();
+            }
+            case 6 : {
+                retireCellphone();
             }
         }
 
@@ -115,6 +121,31 @@ public class InventoryView {
         }
     }
 
+    private void retireCellphone(){
+        //Ask for laptop ID
+        //Fetch laptop info and display for user to confirm this is the correct laptop
+        int id;
+        boolean change;
+        while (true) {
+            System.out.println("Enter cellphone ID to retire");
+            try {
+                id = Integer.parseInt(s.nextLine());
+                change = displayCellphoneById(id);
+                //Check if the user enters a valid id and let him retry if not
+                if (change) {
+                    myController.requestDeletePhoneById(id);
+                    break;
+                }
+                else {
+                    System.out.println("Sorry that user is not in the database.");
+                }
+
+            } catch (NumberFormatException nf) {
+                System.out.println("Enter a number");
+            }
+        }
+    }
+
 
     private void addNewLaptop() {
 
@@ -123,7 +154,7 @@ public class InventoryView {
         System.out.println("Please enter make of laptop (e.g. Toshiba, Sony) : ");
         String make = s.nextLine();
 
-        System.out.println("Please enter make of laptop (e.g. Macbook, X-123) : ");
+        System.out.println("Please enter model of laptop (e.g. Macbook, X-123) : ");
         String model = s.nextLine();
 
         System.out.println("Please enter name of staff member laptop is assigned to : ");
@@ -138,16 +169,40 @@ public class InventoryView {
 
     }
 
+    private void addNewPhone() {
+
+        //Get data about new cellphone from user
+
+        System.out.println("Please enter make of cellphone (e.g. Apple, Samsung) : ");
+        String make = s.nextLine();
+
+        System.out.println("Please enter model of cellphone (e.g. IPhone6, GalaxyNote) : ");
+        String model = s.nextLine();
+
+        System.out.println("Please enter name of staff member cellphone is assigned to : ");
+        String staff = s.nextLine();
+
+        Cellphone c = new Cellphone(make, model, staff);
+
+        myController.requestAddCellphone(c);
+
+        System.out.println("New cellphone added to database");
+
+
+    }
+
 
     private void displayAllInventory() {
+        System.out.println("Please enter an employees name to display his devices");
+        String owner = s.nextLine();
 
-        LinkedList<Laptop> allLaptops = myController.requestAllInventory();
-        if (allLaptops.isEmpty()) {
-            System.out.println("No laptops found in database");
+        LinkedList allDevices = myController.requestAllInventory(owner);
+        if (allDevices.isEmpty()) {
+            System.out.println("No laptops or cellphones found in database");
         } else {
-            System.out.println("All laptops in the database:");
-            for (Laptop l : allLaptops) {
-                System.out.println(l);   //Call the toString method in Laptop
+            System.out.println("All laptops and cellphones in the database:");
+            for (Object o : allDevices) {
+                System.out.println(o);   //Call the toString method in Laptop
             }
         }
     }
@@ -164,6 +219,17 @@ public class InventoryView {
         }
     }
 
+    private boolean displayCellphoneById(int id) {
+        Cellphone c = myController.requestCellphoneById(id);
+        if (c == null) {
+            System.out.println("Cellphone " + id + " not found");
+            return false;
+        } else {
+            System.out.println(c);   //Call the toString method in Cellphone
+            return true;
+        }
+    }
+
     private int displayMenuGetUserChoice() {
 
         boolean inputOK = false;
@@ -174,7 +240,9 @@ public class InventoryView {
             System.out.println("1. View all inventory");
             System.out.println("2. Add a new laptop");
             System.out.println("3. Reassign a laptop to another staff member");
-            System.out.println("4. To be added - retire a laptop");
+            System.out.println("4. Retire a laptop");
+            System.out.println("5. Add a new cellphone");
+            System.out.println("6. Retire a cellphone");
             System.out.println(QUIT + ". Quit program");
 
             System.out.println();
@@ -183,8 +251,8 @@ public class InventoryView {
             String userChoiceStr = s.nextLine();
             try {
                 userChoice = Integer.parseInt(userChoiceStr);
-                if (userChoice < 1  ||  userChoice > 5) {
-                    System.out.println("Please enter a number between 1 and 5");
+                if (userChoice < 1  ||  userChoice > 7) {
+                    System.out.println("Please enter a number between 1 and 7");
                     continue;
                 }
             } catch (NumberFormatException nfe) {

@@ -39,6 +39,7 @@ public class InventoryModel {
 
     PreparedStatement psAddLaptop = null;
     PreparedStatement psDeleteLaptop = null;
+    PreparedStatement psSearchAll = null;
 
 
     public InventoryModel(InventoryController controller) {
@@ -109,11 +110,15 @@ public class InventoryModel {
 
 
         String createLaptopTableSQL = "CREATE TABLE laptops (id int PRIMARY KEY GENERATED ALWAYS AS IDENTITY, make varchar(30), model varchar(30), staff varchar(50))";
-        String deleteTableSQL = "DROP TABLE laptops";
+        String createCellPhoneTableSQL = "CREATE TABLE cellphones (id int PRIMARY KEY GENERATED ALWAYS AS IDENTITY, make varchar(30), model varchar(30), staff varchar(50))";
+        String deleteLaptopTableSQL = "DROP TABLE laptops";
+        String deleteCellphoneTableSQL = "DROP TABLE cellphones";
 
         try {
             statement.executeUpdate(createLaptopTableSQL);
             System.out.println("Created laptop table");
+            statement.executeUpdate(createCellPhoneTableSQL);
+            System.out.println("Created cellphone table");
 
         } catch (SQLException sqle) {
             //Seems the table already exists, or some other error has occurred.
@@ -123,10 +128,12 @@ public class InventoryModel {
             if (sqle.getSQLState().startsWith("X0") ) {    //Error code for table already existing starts with XO
                 if (deleteAndRecreate == true) {
 
-                    System.out.println("laptops table appears to exist already, delete and recreate");
+                    System.out.println("laptops and cellphones tables appear to exist already, delete and recreate");
                     try {
-                        statement.executeUpdate(deleteTableSQL);
+                        statement.executeUpdate(deleteLaptopTableSQL);
                         statement.executeUpdate(createLaptopTableSQL);
+                        statement.executeUpdate(deleteCellphoneTableSQL);
+                        statement.executeUpdate(createCellPhoneTableSQL);
 
                     } catch (SQLException e) {
                         //Still doesn't work. Throw the exception.
@@ -157,12 +164,20 @@ public class InventoryModel {
         // Add some test data.
 
         try {
+            //for laptops
             String addRecord1 = "INSERT INTO laptops (make, model, staff) VALUES ('Toshiba', 'XQ-45', 'Ryan' )";
             statement.executeUpdate(addRecord1);
             String addRecord2 = "INSERT INTO laptops (make, model, staff) VALUES ('Sony', '1234', 'Jane' )";
             statement.executeUpdate(addRecord2);
             String addRecord3 = "INSERT INTO laptops (make, model, staff) VALUES ('Apple', 'Air', 'Alex' )";
             statement.executeUpdate(addRecord3);
+            //for cellphones
+            String addPhoneRecord1 = "INSERT INTO cellphones (make, model, staff) VALUES ('Nokia', '3350', 'Ryan' )";
+            statement.executeUpdate(addPhoneRecord1);
+            String addPhoneRecord2 = "INSERT INTO cellphones (make, model, staff) VALUES ('Samsung', 'GalaxyS4', 'Jane' )";
+            statement.executeUpdate(addPhoneRecord2);
+            String addPhoneRecord3 = "INSERT INTO cellphones (make, model, staff) VALUES ('Apple', 'IPhone5', 'Alex' )";
+            statement.executeUpdate(addPhoneRecord3);
 
         } catch (SQLException sqle) {
             String error = "Unable to add test data, check validity of SQL statements?";
@@ -181,6 +196,8 @@ public class InventoryModel {
         } catch (SQLException se) {
             se.printStackTrace();
         }
+        //statement.executeUpdate(deleteLaptopTableSQL);
+        //statement.executeUpdate(deleteCellphoneTableSQL);
 
         //Close all of the statements. Stored a reference to each statement in allStatements so we can loop over all of them and close them all.
         for (Statement s : allStatements) {
@@ -240,21 +257,55 @@ public class InventoryModel {
         }
     }
 
+    public void addPhone(Cellphone cellphone) throws LaptopDataAccessException {
+
+
+        //Create SQL query to add this cellphone info to DB
+
+        String addPhoneSQLps = "INSERT INTO cellphones (make, model, staff) VALUES ( ? , ? , ?)" ;
+
+        try {
+            psAddLaptop = conn.prepareStatement(addPhoneSQLps, psAddLaptop.RETURN_GENERATED_KEYS);
+            allStatements.add(psAddLaptop);
+            psAddLaptop.setString(1, cellphone.getMake());
+            psAddLaptop.setString(2, cellphone.getModel());
+            psAddLaptop.setString(3, cellphone.getStaff());
+            psAddLaptop.execute();
+
+            //Retrieve new cellphone ID and add it to the Cellphone cellphone so calling methods can use it.
+
+            ResultSet keys = psAddLaptop.getGeneratedKeys();
+            //We assume just one key, which will be the first thing in the ResultSet
+            keys.next();
+            int cellphoneID = keys.getInt(1);
+            cellphone.id = cellphoneID;
+
+
+        }
+        catch (SQLException sqle) {
+            String errorMessage = "Error preparing statement or executing prepared statement to add cellphone";
+            throw new LaptopDataAccessException(errorMessage, sqle);
+        }
+    }
 
     /** @return list of laptops in the DB (will be empty list if no laptops found in DB)
      *  @throws LaptopDataAccessException if SQL error occurs
      *
      */
-    public LinkedList<Laptop> displayAllLaptops() throws LaptopDataAccessException {
+    public LinkedList displayAllDevices(String owner) throws LaptopDataAccessException {
 
-        LinkedList<Laptop> allLaptops = new LinkedList<Laptop>();
+        LinkedList allDevices = new LinkedList();
 
-        String displayAll = "SELECT * FROM laptops";
+        String displayAll = "SELECT laptops.id, laptops.make, laptops.model, cellphones.id, cellphones.make, cellphones.model, laptops.staff " +
+                "FROM laptops, cellphones WHERE laptops.staff = cellphones.staff AND laptops.staff = ?";
         try {
-            rs = statement.executeQuery(displayAll);
+            psSearchAll = conn.prepareStatement(displayAll);
+            allStatements.add(psSearchAll);
+            psSearchAll.setString(1, owner);
+            rs = psSearchAll.executeQuery();
         }
         catch (SQLException sqle) {
-            String errorMessage = "Database error fetching all laptops";
+            String errorMessage = "Database error fetching all devices";
             throw new LaptopDataAccessException(errorMessage, sqle);
         }
 
@@ -262,12 +313,17 @@ public class InventoryModel {
         try {
             while (rs.next()) {
 
-                int id = rs.getInt("id");
-                String make = rs.getString("make");
-                String model = rs.getString("model");
-                String staff = rs.getString("staff");
+                int id = rs.getInt("laptops.id");
+                String make = rs.getString("laptops.make");
+                String model = rs.getString("laptops.model");
+                String staff = rs.getString("laptops.staff");
+                int id2 = rs.getInt("cellphones.id");
+                String make2 = rs.getString("cellphones.make");
+                String model2 = rs.getString("cellphones.model");
                 Laptop l = new Laptop(id, make, model, staff);
-                allLaptops.add(l);
+                Cellphone c = new Cellphone(id2, make2, model2, staff);
+                allDevices.add(l);
+                allDevices.add(c);
 
             }
         } catch (SQLException sqle) {
@@ -277,7 +333,7 @@ public class InventoryModel {
 
         //if we get here, everything should have worked...
         //Return the list of laptops, which will be empty if there is no data in the database
-        return allLaptops;
+        return allDevices;
     }
 
 
@@ -322,6 +378,42 @@ public class InventoryModel {
 
     }
 
+    public Cellphone fetchCellphone(int id) throws LaptopDataAccessException{
+        try {
+            String fetchCellphone = "SELECT * FROM cellphones where id = ?";
+            PreparedStatement psFetch = conn.prepareStatement(fetchCellphone);
+            allStatements.add(psFetch);
+            psFetch.setInt(1, id);
+            rs = psFetch.executeQuery();
+
+            //Expect only one row if cellphone is in DB, or zero (0) rows if it is not.
+
+            if (rs.next()) {
+                String make = rs.getString("make");
+                String model = rs.getString("model");
+                String staff = rs.getString("staff");
+
+                if (!rs.next()) {  //Make sure there are no more rows after the first row
+                    Cellphone c = new Cellphone(id, make, model, staff);
+                    return c;
+                } else {
+                    //more than one laptop found
+                    //Error condition - more than one laptop for primary key ID is a problem that must be fixed
+                    throw new LaptopDataAccessException("More than one cellphone in database for ID " + id);
+                }
+            } else {
+                //rs has no rows - no laptop found - return null
+                return null;
+            }
+
+        } catch (SQLException sqle) {
+            String errorMessage = "Database error fetching cellphone for ID " + id + " check inner exception for details";
+            throw new LaptopDataAccessException(errorMessage, sqle);
+
+        }
+
+    }
+
     /** @return true if laptop update is successful (1 row is changed) or false if laptop not updated = this will be because the id isn't in the database
      * @throws LaptopDataAccessException if more than one laptop with that ID found or in the case of general DB errors */
 
@@ -359,6 +451,33 @@ public class InventoryModel {
 
         try {
             psDeleteLaptop = conn.prepareStatement(deleteLaptopSQLps);
+            allStatements.add(psDeleteLaptop);
+            psDeleteLaptop.setInt(1, id);
+            //We expect exactly one row to be modified.
+            int rowsModified = psDeleteLaptop.executeUpdate();  //exceuteUpdate returns the number of rows modified so we can check to make sure exactly one row was changed - the row with the specific laptop
+            if (rowsModified == 1) {
+                return true;   //Success
+            } else if (rowsModified == 0 ){
+                //This means the laptop is not found. Return message that permits the user to try again - maybe a bad ID was entered?
+                return false;
+            } else {
+                //rowsModified is not 0 or 1 - so more than 1 row was modified. (Can executeUpdate return negative numbers? I don't think so...)
+                throw new LaptopDataAccessException("More than one laptop with laptop id " + id);
+            }
+
+        } catch (SQLException sqle) {
+            String errorMessage = "Error preparing statement or executing prepared statement to add laptop";
+            throw new LaptopDataAccessException(errorMessage, sqle);
+        }
+    }
+
+    public boolean deleteCellphone (int id) {
+        //Create SQL query to delete this laptop(id) from the DB
+
+        String deleteCellphoneSQLps = "DELETE FROM cellphones WHERE id = ?";
+
+        try {
+            psDeleteLaptop = conn.prepareStatement(deleteCellphoneSQLps);
             allStatements.add(psDeleteLaptop);
             psDeleteLaptop.setInt(1, id);
             //We expect exactly one row to be modified.
