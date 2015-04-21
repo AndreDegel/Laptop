@@ -288,10 +288,11 @@ public class InventoryModel {
         }
     }
 
-    /** @return list of laptops in the DB (will be empty list if no laptops found in DB)
+    /** @return list of devices in the DB (will be empty list if no devices found in DB)
      *  @throws LaptopDataAccessException if SQL error occurs
      *
      */
+    //TODO: won't recognice table specification
     public LinkedList displayAllDevices(String owner) throws LaptopDataAccessException {
 
         LinkedList allDevices = new LinkedList();

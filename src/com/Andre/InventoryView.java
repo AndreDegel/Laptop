@@ -57,6 +57,7 @@ public class InventoryView {
                 retireLaptop();
                 break;
             }
+            //TODO: find out why it jumps afterwards automatically to 6
             case 5 : {
                 addNewPhone();
             }
