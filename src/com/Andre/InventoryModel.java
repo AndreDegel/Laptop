@@ -292,13 +292,11 @@ public class InventoryModel {
      *  @throws LaptopDataAccessException if SQL error occurs
      *
      */
-    //TODO: won't recognice table specification
     public LinkedList displayAllDevices(String owner) throws LaptopDataAccessException {
 
         LinkedList allDevices = new LinkedList();
-
         String displayAll = "SELECT laptops.id, laptops.make, laptops.model, cellphones.id, cellphones.make, cellphones.model, laptops.staff " +
-                "FROM laptops, cellphones WHERE laptops.staff = cellphones.staff AND laptops.staff = ?";
+                "FROM laptops JOIN cellphones ON laptops.staff = cellphones.staff WHERE laptops.staff = ?";
         try {
             psSearchAll = conn.prepareStatement(displayAll);
             allStatements.add(psSearchAll);
@@ -314,13 +312,14 @@ public class InventoryModel {
         try {
             while (rs.next()) {
 
-                int id = rs.getInt("laptops.id");
-                String make = rs.getString("laptops.make");
-                String model = rs.getString("laptops.model");
-                String staff = rs.getString("laptops.staff");
-                int id2 = rs.getInt("cellphones.id");
-                String make2 = rs.getString("cellphones.make");
-                String model2 = rs.getString("cellphones.model");
+                int id = rs.getInt("id");
+                String make = rs.getString("make");
+                String model = rs.getString("model");
+                String staff = rs.getString("staff");
+                //accessed columns by index since by name, like cellphone.make seemed not to work
+                int id2 = rs.getInt(4);
+                String make2 = rs.getString(5);
+                String model2 = rs.getString(6);
                 Laptop l = new Laptop(id, make, model, staff);
                 Cellphone c = new Cellphone(id2, make2, model2, staff);
                 allDevices.add(l);

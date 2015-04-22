@@ -11,7 +11,6 @@ import java.util.Scanner;
 public class InventoryView {
 
     private final int QUIT = 7;   //Modify if you add more menu items.
-    //TODO Can you think of a more robust way of handling menu options which would be easy to modify with a varying number of menu choices?
 
     InventoryController myController;
     Scanner s;
@@ -57,12 +56,13 @@ public class InventoryView {
                 retireLaptop();
                 break;
             }
-            //TODO: find out why it jumps afterwards automatically to 6
             case 5 : {
                 addNewPhone();
+                break;
             }
             case 6 : {
                 retireCellphone();
+                break;
             }
         }
 
